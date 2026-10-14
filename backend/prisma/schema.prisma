@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String
+  passwordHash  String       @map("password_hash")
+  role          UserRole     @default(VIEWER)
+  orgId         String       @map("org_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  
+  organization  Organization  @relation(fields: [orgId], references: [id])
+  promptEvents PromptEvent[]
+  
+  @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  settings  Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  users         User[]
+  policies      Policy[]
+  promptEvents  PromptEvent[]
+  auditLogs     AuditLog[]
+  
+  @@map("organizations")
+}
+
+model Policy {
+  id          String      @id @default(cuid())
+  orgId       String      @map("org_id")
+  name        String
+  severity    PolicySeverity
+  active      Boolean     @default(true)
+  description String?
+  rules       Json        // JSON structure for policy rules (regex, keywords, etc.)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  
+  organization       Organization       @relation(fields: [orgId], references: [id])
+  policyViolations   PolicyViolation[]
+  
+  @@map("policies")
+}
+
+model Agent {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  type         AgentType
+  status       AgentStatus @default(OFFLINE)
+  version      String   @default("1.0.0")
+  lastHeartbeat DateTime? @map("last_heartbeat")
+  metrics      Json?    @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  @@map("agents")
+}
+
+model PromptEvent {
+  id            String            @id @default(cuid())
+  orgId         String            @map("org_id")
+  userId        String?           @map("user_id")
+  originalText  String            @map("original_text")
+  rewrittenText String?           @map("rewritten_text")
+  riskScore     Float             @map("risk_score") // 0-1
+  severity      EventSeverity
+  findings      Json?             // Array of finding strings
+  metadata      Json?             @default("{}") // IP, model used, etc.
+  createdAt     DateTime          @default(now()) @map("created_at")
+  
+  organization       Organization       @relation(fields: [orgId], references: [id])
+  user               User?              @relation(fields: [userId], references: [id])
+  policyViolations   PolicyViolation[]
+  
+  @@map("prompt_events")
+}
+
+model PolicyViolation {
+  id            String   @id @default(cuid())
+  promptEventId String   @map("prompt_event_id")
+  policyId      String   @map("policy_id")
+  description   String
+  severity      PolicySeverity
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  promptEvent PromptEvent @relation(fields: [promptEventId], references: [id], onDelete: Cascade)
+  policy      Policy     @relation(fields: [policyId], references: [id])
+  
+  @@map("policy_violations")
+}
+
+model AuditLog {
+  id        String        @id @default(cuid())
+  orgId     String?       @map("org_id")
+  timestamp DateTime      @default(now())
+  severity  EventSeverity
+  eventType String        @map("event_type")
+  agentName String?       @map("agent_name")
+  status    String?       // success, error, warning
+  metadata  Json?         @default("{}")
+  
+  organization Organization? @relation(fields: [orgId], references: [id])
+  
+  @@map("audit_logs")
+  @@index([timestamp])
+  @@index([severity])
+  @@index([eventType])
+}
+
+enum UserRole {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum PolicySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AgentType {
+  RISK_DETECTION
+  POLICY_ENFORCEMENT
+  REWRITE
+  RED_TEAM
+  DEVOPS
+}
+
+enum AgentStatus {
+  OPERATIONAL
+  DEGRADED
+  OFFLINE
+}
+
+enum EventSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
