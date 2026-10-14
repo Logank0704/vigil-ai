@@ -10,7 +10,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx src/seed.ts",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && prisma db push --accept-data-loss && tsx src/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +25,8 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "jsonwebtoken": "^9.0.2",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "tsx": "^4.7.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -32,8 +35,6 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.5",
     "prisma": "^5.7.1",
-    "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
 }
-
