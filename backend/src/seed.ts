@@ -200,6 +200,14 @@ async function main() {
     }
   ];
 
+  // Re-running the seed (e.g. on every deploy) must not duplicate sample events.
+  if ((await prisma.promptEvent.count({ where: { orgId: org.id } })) > 0) {
+    console.log('Sample events already present, skipping event seeding');
+    console.log('📧 Admin credentials: admin@cyberdyne.com / admin123');
+    console.log('📧 Analyst credentials: analyst@cyberdyne.com / analyst123');
+    return;
+  }
+
   for (let i = 0; i < samplePrompts.length; i++) {
     const prompt = samplePrompts[i];
     const createdAt = new Date(Date.now() - (i * 60 * 60 * 1000)); // Spread over hours

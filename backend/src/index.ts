@@ -76,10 +76,14 @@ async function initializeAgents() {
   }, 30000); // Every 30 seconds
 }
 
-// Start server
-app.listen(PORT, async () => {
-  console.log(`🚀 Vigil AI Backend running on port ${PORT}`);
-  await initializeAgents();
-  console.log('✅ Agents initialized');
-});
+// Start server. On Vercel the app is exported and invoked as a serverless
+// function, so we only open a port (and run the heartbeat timer) elsewhere.
+if (!process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`🚀 Vigil AI Backend running on port ${PORT}`);
+    await initializeAgents();
+    console.log('✅ Agents initialized');
+  });
+}
 
+export default app;
