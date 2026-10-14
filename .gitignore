@@ -1,0 +1,38 @@
+
+# Dependencies
+# Environment variables
+# IDE
+# Logs
+# OS
+# Prisma
+# Production
+# Testing
+*.db
+*.db-journal
+*.log
+*.swo
+*.swp
+*~
+.DS_Store
+.env
+.env.development.local
+.env.local
+.env.production.local
+.env.test.local
+.idea/
+.next
+.next/
+.pnp
+.pnp.js
+.vscode/
+Thumbs.db
+build/
+coverage/
+dist
+dist/
+node_modules
+node_modules/
+npm-debug.log*
+out/
+yarn-debug.log*
+yarn-error.log*
